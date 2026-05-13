@@ -19,10 +19,13 @@ export function usePomodoroTimer({
 }: PomodoroTimerOptions) {
   const [mode, setMode] = useState<TimerMode>('focus')
   const [isRunning, setIsRunning] = useState(false)
-  // remainingSeconds is only authoritative when the timer has been started/paused.
-  // Before first start (or after reset), displayed time is derived from settings.
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const onEndRef = useRef(onEnd)
+  const endSoundEnabledRef = useRef(endSoundEnabled)
+
+  useEffect(() => { onEndRef.current = onEnd }, [onEnd])
+  useEffect(() => { endSoundEnabledRef.current = endSoundEnabled }, [endSoundEnabled])
 
   const settingsSeconds = mode === 'focus' ? focusMinutes * 60 : breakMinutes * 60
   const displaySeconds = remainingSeconds ?? settingsSeconds
@@ -37,23 +40,24 @@ export function usePomodoroTimer({
   useEffect(() => {
     if (!isRunning) return
     intervalRef.current = setInterval(() => {
+      // Use a local flag so side effects run in the interval callback, not inside the state updater.
+      // This prevents double-fire in React Strict Mode where updater functions may be called twice.
+      let completed = false
       setRemainingSeconds((prev) => {
         const current = prev ?? settingsSeconds
-        if (current <= 1) {
-          clear()
-          setIsRunning(false)
-          if (endSoundEnabled) playEndSound()
-          onEnd?.()
-          return 0
-        }
+        if (current <= 1) { completed = true; return 0 }
         return current - 1
       })
+      if (completed) {
+        clear()
+        setIsRunning(false)
+        if (endSoundEnabledRef.current) playEndSound()
+        onEndRef.current?.()
+      }
     }, 1000)
     return clear
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRunning, clear, endSoundEnabled])
+  }, [isRunning, clear, settingsSeconds])
 
-  // Update document.title while running
   useEffect(() => {
     if (isRunning) {
       const label = mode === 'focus' ? 'Focus' : 'Break'
@@ -63,9 +67,11 @@ export function usePomodoroTimer({
     }
   }, [isRunning, displaySeconds, mode])
 
+  useEffect(() => () => { document.title = 'ColoredNoiseTimer' }, [])
+
   const start = useCallback(() => {
-    // Initialise remainingSeconds from settings if not yet started
-    setRemainingSeconds((prev) => prev ?? settingsSeconds)
+    // Reset to settings if never started (null) or previously completed (0)
+    setRemainingSeconds((prev) => (prev === null || prev === 0) ? settingsSeconds : prev)
     setIsRunning(true)
   }, [settingsSeconds])
 
@@ -77,7 +83,7 @@ export function usePomodoroTimer({
   const reset = useCallback(() => {
     clear()
     setIsRunning(false)
-    setRemainingSeconds(null) // derived from settings again
+    setRemainingSeconds(null)
   }, [clear])
 
   const switchMode = useCallback(

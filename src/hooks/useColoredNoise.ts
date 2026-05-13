@@ -31,10 +31,12 @@ export function useColoredNoise(): UseColoredNoiseReturn {
         ctx.resume()
       }
 
-      const gain = gainRef.current ?? ctx.createGain()
+      if (!gainRef.current) {
+        gainRef.current = ctx.createGain()
+        gainRef.current.connect(ctx.destination)
+      }
+      const gain = gainRef.current
       gain.gain.value = volume
-      gain.connect(ctx.destination)
-      gainRef.current = gain
 
       const source = createNoiseNode(ctx, type)
       source.connect(gain)
