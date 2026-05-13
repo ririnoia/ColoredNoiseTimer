@@ -21,6 +21,9 @@ export function usePomodoroTimer({
   const [isRunning, setIsRunning] = useState(false)
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // remainingRef mirrors state so the interval callback always reads the current value
+  // without relying on state updater timing (React 18 auto-batching makes that unreliable)
+  const remainingRef = useRef<number | null>(null)
   const onEndRef = useRef(onEnd)
   const endSoundEnabledRef = useRef(endSoundEnabled)
 
@@ -40,15 +43,11 @@ export function usePomodoroTimer({
   useEffect(() => {
     if (!isRunning) return
     intervalRef.current = setInterval(() => {
-      // Use a local flag so side effects run in the interval callback, not inside the state updater.
-      // This prevents double-fire in React Strict Mode where updater functions may be called twice.
-      let completed = false
-      setRemainingSeconds((prev) => {
-        const current = prev ?? settingsSeconds
-        if (current <= 1) { completed = true; return 0 }
-        return current - 1
-      })
-      if (completed) {
+      const current = remainingRef.current ?? settingsSeconds
+      const next = current <= 1 ? 0 : current - 1
+      remainingRef.current = next
+      setRemainingSeconds(next)
+      if (next === 0) {
         clear()
         setIsRunning(false)
         if (endSoundEnabledRef.current) playEndSound()
@@ -71,7 +70,11 @@ export function usePomodoroTimer({
 
   const start = useCallback(() => {
     // Reset to settings if never started (null) or previously completed (0)
-    setRemainingSeconds((prev) => (prev === null || prev === 0) ? settingsSeconds : prev)
+    const next = (remainingRef.current === null || remainingRef.current === 0)
+      ? settingsSeconds
+      : remainingRef.current
+    remainingRef.current = next
+    setRemainingSeconds(next)
     setIsRunning(true)
   }, [settingsSeconds])
 
@@ -83,6 +86,7 @@ export function usePomodoroTimer({
   const reset = useCallback(() => {
     clear()
     setIsRunning(false)
+    remainingRef.current = null
     setRemainingSeconds(null)
   }, [clear])
 
@@ -91,6 +95,7 @@ export function usePomodoroTimer({
       clear()
       setIsRunning(false)
       setMode(next)
+      remainingRef.current = null
       setRemainingSeconds(null)
     },
     [clear]
