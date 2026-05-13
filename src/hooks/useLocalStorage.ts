@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 function readFromStorage<T>(key: string, initialValue: T): T {
   if (typeof window === 'undefined') return initialValue
@@ -11,24 +11,25 @@ function readFromStorage<T>(key: string, initialValue: T): T {
 }
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
-  const [storedKey, setStoredKey] = useState(key)
-  const [value, setValue] = useState<T>(() => readFromStorage(key, initialValue))
-
-  // React "storing information from previous renders" pattern:
-  // calling setState during render forces an immediate re-render with the new state,
-  // preventing the stale value from being written to the new key.
-  if (storedKey !== key) {
-    setStoredKey(key)
-    setValue(readFromStorage(key, initialValue))
-  }
+  // Always start with initialValue so server and client first renders match (no hydration mismatch).
+  // localStorage is read in an effect after mount, then the state is updated.
+  const [value, setValue] = useState<T>(initialValue)
+  const hydratedRef = useRef(false)
 
   useEffect(() => {
+    if (!hydratedRef.current) {
+      // First run: load stored value and skip the localStorage write (nothing has changed yet)
+      hydratedRef.current = true
+      setValue(readFromStorage(key, initialValue))
+      return
+    }
+    // Subsequent runs: persist the user's change
     try {
       localStorage.setItem(key, JSON.stringify(value))
     } catch {
       // localStorage unavailable — silently ignore
     }
-  }, [key, value])
+  }, [key, value, initialValue])
 
   return [value, setValue] as const
 }
