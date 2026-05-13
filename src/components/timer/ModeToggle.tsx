@@ -17,7 +17,7 @@ export function ModeToggle({ mode, onSwitch }: ModeToggleProps) {
         <button
           key={value}
           type="button"
-          onClick={() => onSwitch(value)}
+          onClick={() => { if (mode !== value) onSwitch(value) }}
           aria-pressed={mode === value}
           className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
             mode === value
