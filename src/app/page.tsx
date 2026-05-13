@@ -41,7 +41,6 @@ export default function Home() {
   const [rawBreakMinutes, setBreakMinutes] = useLocalStorage<number>('breakMinutes', DEFAULT_BREAK_MINUTES)
   const [rawEndSoundEnabled, setEndSoundEnabled] = useLocalStorage<boolean>('endSoundEnabled', DEFAULT_END_SOUND_ENABLED)
 
-  // Validate localStorage values before use — guards against stale, corrupted or out-of-range data
   const noiseType = safeNoiseType(rawNoiseType)
   const volume = safeVolume(rawVolume)
   const focusMinutes = safeMinutes(rawFocusMinutes, DEFAULT_FOCUS_MINUTES)
@@ -74,47 +73,50 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center py-10 px-4">
-      <div className="w-full max-w-sm flex flex-col gap-8">
+    <main className="min-h-screen flex flex-col items-center py-8 px-4">
+      <div className="w-full max-w-sm flex flex-col gap-6">
 
         <h1 className="text-center text-xs font-medium text-gray-500 tracking-widest uppercase">
           ColoredNoiseTimer
         </h1>
 
-        <ModeToggle mode={timer.mode} onSwitch={timer.switchMode} />
+        {/* タイマーセクション */}
+        <div className="flex flex-col gap-4">
+          <ModeToggle mode={timer.mode} onSwitch={timer.switchMode} />
 
-        <TimerDisplay seconds={timer.remainingSeconds} />
+          <div className="flex flex-col gap-1">
+            <TimerDisplay seconds={timer.remainingSeconds} />
+            <TimerSettings
+              focusMinutes={focusMinutes}
+              breakMinutes={breakMinutes}
+              endSoundEnabled={endSoundEnabled}
+              onFocusChange={setFocusMinutes}
+              onBreakChange={setBreakMinutes}
+              onEndSoundChange={setEndSoundEnabled}
+            />
+          </div>
 
-        <TimerControls
-          isRunning={timer.isRunning}
-          onStart={timer.start}
-          onStop={timer.stop}
-          onReset={timer.reset}
-        />
+          <TimerControls
+            isRunning={timer.isRunning}
+            onStart={timer.start}
+            onStop={timer.stop}
+            onReset={timer.reset}
+          />
+        </div>
 
         <hr className="border-gray-800" />
 
-        <NoiseSelector selected={noiseType} onChange={handleNoiseTypeChange} />
-
-        <AudioControls
-          isPlaying={isPlaying}
-          noiseType={noiseType}
-          onPlay={handlePlay}
-          onStop={handleNoiseStop}
-        />
-
-        <VolumeSlider volume={volume} onChange={handleVolumeChange} />
-
-        <hr className="border-gray-800" />
-
-        <TimerSettings
-          focusMinutes={focusMinutes}
-          breakMinutes={breakMinutes}
-          endSoundEnabled={endSoundEnabled}
-          onFocusChange={setFocusMinutes}
-          onBreakChange={setBreakMinutes}
-          onEndSoundChange={setEndSoundEnabled}
-        />
+        {/* ノイズセクション */}
+        <div className="flex flex-col gap-4">
+          <NoiseSelector selected={noiseType} onChange={handleNoiseTypeChange} />
+          <AudioControls
+            isPlaying={isPlaying}
+            noiseType={noiseType}
+            onPlay={handlePlay}
+            onStop={handleNoiseStop}
+          />
+          <VolumeSlider volume={volume} onChange={handleVolumeChange} />
+        </div>
 
         <FutureAdSlot />
 
