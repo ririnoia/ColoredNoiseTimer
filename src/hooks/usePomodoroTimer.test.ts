@@ -73,6 +73,19 @@ describe('usePomodoroTimer', () => {
     expect(result.current.remainingSeconds).toBe(0)
   })
 
+  it('onEndコールバック内でswitchModeを呼ぶと次のモードに切り替わる', () => {
+    const { result } = renderHook(() =>
+      usePomodoroTimer({ focusMinutes: 1, breakMinutes: 5, endSoundEnabled: false,
+        onEnd: () => { result.current.switchMode('break') }
+      })
+    )
+    act(() => { result.current.start() })
+    act(() => { vi.advanceTimersByTime(60_000) })
+    expect(result.current.mode).toBe('break')
+    expect(result.current.remainingSeconds).toBe(300)
+    expect(result.current.isRunning).toBe(false)
+  })
+
   it('switchMode()でbreakに切り替わり残り時間がリセットされる', () => {
     const { result } = renderHook(() => usePomodoroTimer(defaultOpts))
     act(() => { result.current.switchMode('break') })

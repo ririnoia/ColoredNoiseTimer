@@ -13,6 +13,7 @@ import {
   DEFAULT_FOCUS_MINUTES,
   DEFAULT_BREAK_MINUTES,
   DEFAULT_END_SOUND_ENABLED,
+  DEFAULT_AUTO_START,
 } from '@/lib/constants'
 import type { NoiseType } from '@/lib/constants'
 import { ModeToggle } from '@/components/timer/ModeToggle'
@@ -42,31 +43,45 @@ export default function Home() {
   const [rawFocusMinutes, setFocusMinutes] = useLocalStorage<number>('focusMinutes', DEFAULT_FOCUS_MINUTES)
   const [rawBreakMinutes, setBreakMinutes] = useLocalStorage<number>('breakMinutes', DEFAULT_BREAK_MINUTES)
   const [rawEndSoundEnabled, setEndSoundEnabled] = useLocalStorage<boolean>('endSoundEnabled', DEFAULT_END_SOUND_ENABLED)
+  const [rawAutoStart, setAutoStart] = useLocalStorage<boolean>('autoStart', DEFAULT_AUTO_START)
 
   const noiseType = safeNoiseType(rawNoiseType)
   const volume = safeVolume(rawVolume)
   const focusMinutes = safeMinutes(rawFocusMinutes, DEFAULT_FOCUS_MINUTES)
   const breakMinutes = safeMinutes(rawBreakMinutes, DEFAULT_BREAK_MINUTES)
   const endSoundEnabled = typeof rawEndSoundEnabled === 'boolean' ? rawEndSoundEnabled : DEFAULT_END_SOUND_ENABLED
+  const autoStart = typeof rawAutoStart === 'boolean' ? rawAutoStart : DEFAULT_AUTO_START
 
   const [isPlaying, setIsPlaying] = useState(false)
-  const noise = useColoredNoise()
+
+  // useColoredNoise の関数を直接分割代入することで安定した参照を得る
+  // noise オブジェクトは毎レンダーで新規生成されるが、各関数は useCallback で安定している
+  const { play: noisePlay, stop: noiseStop, setVolume: noiseSetVolume } = useColoredNoise()
   const { requestPermission, notify } = useNotification()
 
-  // タイマー終了時に終了したモードを通知文に使うためrefで追跡
   const timerModeRef = useRef<TimerMode>('focus')
+  const switchModeRef = useRef<(mode: TimerMode) => void>(() => {})
+  const autoStartRef = useRef(autoStart)
+  // タイマー終了によるモード切替を自動開始effectに伝えるフラグ
+  const modeChangedByEndRef = useRef(false)
 
+  // noiseStop は安定しているので stopNoise も安定した参照になる
   const stopNoise = useCallback(() => {
-    noise.stop()
+    noiseStop()
     setIsPlaying(false)
-  }, [noise])
+  }, [noiseStop])
 
   const handleTimerEnd = useCallback(() => {
     stopNoise()
-    if (timerModeRef.current === 'focus') {
+    const endedMode = timerModeRef.current
+    if (endedMode === 'focus') {
       notify('集中タイマー終了', { body: '休憩しましょう', icon: '/favicon.ico' })
     } else {
       notify('休憩タイマー終了', { body: '集中を再開しましょう', icon: '/favicon.ico' })
+    }
+    switchModeRef.current(endedMode === 'focus' ? 'break' : 'focus')
+    if (autoStartRef.current) {
+      modeChangedByEndRef.current = true
     }
   }, [stopNoise, notify])
 
@@ -77,15 +92,27 @@ export default function Home() {
     onEnd: handleTimerEnd,
   })
 
+  useEffect(() => { timerModeRef.current = timer.mode }, [timer.mode])
+  useEffect(() => { switchModeRef.current = timer.switchMode }, [timer.switchMode])
+  useEffect(() => { autoStartRef.current = autoStart }, [autoStart])
+
+  // 自動開始: timer.mode 変化後（コミット済み）にタイマーとノイズを開始する。
+  // このタイミングで timer.start() を呼ぶことで、切替後のモードの settingsSeconds が使われる。
+  // noiseType/volume/noisePlay の変化では発火させないため deps は timer.mode のみ。
   useEffect(() => {
-    timerModeRef.current = timer.mode
+    if (!modeChangedByEndRef.current) return
+    modeChangedByEndRef.current = false
+    timer.start()
+    noisePlay(noiseType, volume)
+    setIsPlaying(true)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timer.mode])
 
   // タイマー操作（ノイズ連動 + 通知許可リクエスト）
   const handleTimerStart = () => {
     requestPermission()
     timer.start()
-    noise.play(noiseType, volume)
+    noisePlay(noiseType, volume)
     setIsPlaying(true)
   }
 
@@ -106,18 +133,18 @@ export default function Home() {
 
   // ノイズ単独操作
   const handlePlay = () => {
-    noise.play(noiseType, volume)
+    noisePlay(noiseType, volume)
     setIsPlaying(true)
   }
 
   const handleNoiseTypeChange = (type: NoiseType) => {
     setNoiseType(type)
-    if (isPlaying) noise.play(type, volume)
+    if (isPlaying) noisePlay(type, volume)
   }
 
   const handleVolumeChange = (v: number) => {
     setVolume(v)
-    noise.setVolume(v)
+    noiseSetVolume(v)
   }
 
   return (
@@ -138,9 +165,11 @@ export default function Home() {
               focusMinutes={focusMinutes}
               breakMinutes={breakMinutes}
               endSoundEnabled={endSoundEnabled}
+              autoStart={autoStart}
               onFocusChange={setFocusMinutes}
               onBreakChange={setBreakMinutes}
               onEndSoundChange={setEndSoundEnabled}
+              onAutoStartChange={setAutoStart}
             />
           </div>
 
