@@ -53,21 +53,23 @@ export default function Home() {
   const autoStart = typeof rawAutoStart === 'boolean' ? rawAutoStart : DEFAULT_AUTO_START
 
   const [isPlaying, setIsPlaying] = useState(false)
-  const noise = useColoredNoise()
+
+  // useColoredNoise の関数を直接分割代入することで安定した参照を得る
+  // noise オブジェクトは毎レンダーで新規生成されるが、各関数は useCallback で安定している
+  const { play: noisePlay, stop: noiseStop, setVolume: noiseSetVolume } = useColoredNoise()
   const { requestPermission, notify } = useNotification()
 
-  // onEnd コールバック内で最新の値を参照するためのref群
-  // （handleTimerEnd は usePomodoroTimer より先に定義するため直接参照できない）
   const timerModeRef = useRef<TimerMode>('focus')
   const switchModeRef = useRef<(mode: TimerMode) => void>(() => {})
-  const startTimerRef = useRef<() => void>(() => {})
-  const playNoiseRef = useRef<() => void>(() => {})
   const autoStartRef = useRef(autoStart)
+  // タイマー終了によるモード切替を自動開始effectに伝えるフラグ
+  const modeChangedByEndRef = useRef(false)
 
+  // noiseStop は安定しているので stopNoise も安定した参照になる
   const stopNoise = useCallback(() => {
-    noise.stop()
+    noiseStop()
     setIsPlaying(false)
-  }, [noise])
+  }, [noiseStop])
 
   const handleTimerEnd = useCallback(() => {
     stopNoise()
@@ -79,8 +81,7 @@ export default function Home() {
     }
     switchModeRef.current(endedMode === 'focus' ? 'break' : 'focus')
     if (autoStartRef.current) {
-      startTimerRef.current()
-      playNoiseRef.current()
+      modeChangedByEndRef.current = true
     }
   }, [stopNoise, notify])
 
@@ -93,20 +94,25 @@ export default function Home() {
 
   useEffect(() => { timerModeRef.current = timer.mode }, [timer.mode])
   useEffect(() => { switchModeRef.current = timer.switchMode }, [timer.switchMode])
-  useEffect(() => { startTimerRef.current = timer.start }, [timer.start])
-  useEffect(() => {
-    playNoiseRef.current = () => {
-      noise.play(noiseType, volume)
-      setIsPlaying(true)
-    }
-  }, [noise, noiseType, volume])
   useEffect(() => { autoStartRef.current = autoStart }, [autoStart])
+
+  // 自動開始: timer.mode 変化後（コミット済み）にタイマーとノイズを開始する。
+  // このタイミングで timer.start() を呼ぶことで、切替後のモードの settingsSeconds が使われる。
+  // noiseType/volume/noisePlay の変化では発火させないため deps は timer.mode のみ。
+  useEffect(() => {
+    if (!modeChangedByEndRef.current) return
+    modeChangedByEndRef.current = false
+    timer.start()
+    noisePlay(noiseType, volume)
+    setIsPlaying(true)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timer.mode])
 
   // タイマー操作（ノイズ連動 + 通知許可リクエスト）
   const handleTimerStart = () => {
     requestPermission()
     timer.start()
-    noise.play(noiseType, volume)
+    noisePlay(noiseType, volume)
     setIsPlaying(true)
   }
 
@@ -127,18 +133,18 @@ export default function Home() {
 
   // ノイズ単独操作
   const handlePlay = () => {
-    noise.play(noiseType, volume)
+    noisePlay(noiseType, volume)
     setIsPlaying(true)
   }
 
   const handleNoiseTypeChange = (type: NoiseType) => {
     setNoiseType(type)
-    if (isPlaying) noise.play(type, volume)
+    if (isPlaying) noisePlay(type, volume)
   }
 
   const handleVolumeChange = (v: number) => {
     setVolume(v)
-    noise.setVolume(v)
+    noiseSetVolume(v)
   }
 
   return (
