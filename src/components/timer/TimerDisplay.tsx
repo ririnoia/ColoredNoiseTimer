@@ -11,7 +11,7 @@ export function TimerDisplay({ seconds }: TimerDisplayProps) {
     <div className="text-center pt-2 pb-0">
       <time
         dateTime={`PT${m}M${s}S`}
-        className="text-8xl font-mono font-bold tracking-tight text-white tabular-nums"
+        className="text-8xl font-mono font-bold tracking-tight text-gray-950 dark:text-white tabular-nums"
       >
         {formatTime(seconds)}
       </time>

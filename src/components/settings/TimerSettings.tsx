@@ -18,7 +18,7 @@ export function TimerSettings({
   const clamp = (v: number) => Math.max(1, Math.min(99, v))
 
   return (
-    <div className="flex items-center justify-center gap-5 text-sm text-gray-400">
+    <div className="flex items-center justify-center gap-5 text-sm text-gray-500 dark:text-gray-400">
 
       <div className="flex items-center gap-1.5">
         <label htmlFor="focus-minutes">集中</label>
@@ -32,7 +32,7 @@ export function TimerSettings({
             const v = clamp(Number(e.target.value))
             if (!isNaN(v)) onFocusChange(v)
           }}
-          className="w-12 bg-gray-900 text-gray-100 text-center rounded px-1 py-1"
+          className="w-12 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-center rounded px-1 py-1"
         />
         <span>分</span>
       </div>
@@ -49,7 +49,7 @@ export function TimerSettings({
             const v = clamp(Number(e.target.value))
             if (!isNaN(v)) onBreakChange(v)
           }}
-          className="w-12 bg-gray-900 text-gray-100 text-center rounded px-1 py-1"
+          className="w-12 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-center rounded px-1 py-1"
         />
         <span>分</span>
       </div>
@@ -63,11 +63,13 @@ export function TimerSettings({
           aria-label="終了音"
           onClick={() => onEndSoundChange(!endSoundEnabled)}
           className={`relative w-9 h-5 rounded-full transition-colors ${
-            endSoundEnabled ? 'bg-white' : 'bg-gray-700'
+            endSoundEnabled
+              ? 'bg-gray-900 dark:bg-white'
+              : 'bg-gray-300 dark:bg-gray-700'
           }`}
         >
           <span
-            className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-gray-900 transition-transform ${
+            className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white dark:bg-gray-900 transition-transform ${
               endSoundEnabled ? 'translate-x-4' : ''
             }`}
           />

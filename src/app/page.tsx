@@ -124,7 +124,7 @@ export default function Home() {
     <main className="min-h-screen flex flex-col items-center py-8 px-4">
       <div className="w-full max-w-sm flex flex-col gap-6">
 
-        <h1 className="text-center text-xs font-medium text-gray-500 tracking-widest uppercase">
+        <h1 className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 tracking-widest uppercase">
           ColoredNoiseTimer
         </h1>
 
@@ -152,7 +152,7 @@ export default function Home() {
           />
         </div>
 
-        <hr className="border-gray-800" />
+        <hr className="border-gray-200 dark:border-gray-800" />
 
         {/* ノイズセクション */}
         <div className="flex flex-col gap-4">

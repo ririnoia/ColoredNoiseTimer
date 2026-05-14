@@ -25,10 +25,10 @@ export function NoiseSelector({ selected, onChange }: NoiseSelectorProps) {
           onClick={() => onChange(type)}
           aria-pressed={selected === type}
           aria-label={type}
-          className={`w-8 h-8 rounded-full transition-all ${NOISE_COLORS[type]} ${
+          className={`w-8 h-8 rounded-full transition-all border border-gray-200 dark:border-0 ${NOISE_COLORS[type]} ${
             selected === type
-              ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-950 scale-110'
-              : 'opacity-50 hover:opacity-80'
+              ? 'ring-2 ring-gray-900 dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-gray-950 scale-110'
+              : 'opacity-60 hover:opacity-90'
           }`}
         />
       ))}
