@@ -1,10 +1,12 @@
 const CACHE_NAME = 'cnt-v1'
 
-// インストール: ルートページをプリキャッシュ
+// インストール: ルートページとオフラインフォールバックページをプリキャッシュ
+// JS/CSS バンドルはコンテンツハッシュ付きのため事前列挙が困難なので、
+// JS/CSS に依存しない自己完結の offline.html をオフライン時に提供する
 self.addEventListener('install', (event) => {
   self.skipWaiting()
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(['/']))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(['/', '/offline.html']))
   )
 })
 
@@ -41,7 +43,8 @@ self.addEventListener('fetch', (event) => {
           }
           return response
         } catch {
-          const cached = await caches.match('/')
+          // JS/CSS に依存しない offline.html を提供し、壊れたアプリシェルを避ける
+          const cached = await caches.match('/offline.html')
           return cached ?? Response.error()
         }
       })()
