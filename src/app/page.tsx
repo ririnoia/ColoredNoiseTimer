@@ -174,7 +174,11 @@ export default function Home() {
           <ModeToggle mode={timer.mode} onSwitch={handleSwitchMode} />
 
           <div className="flex flex-col gap-1">
-            <TimerDisplay seconds={timer.remainingSeconds} />
+            <TimerDisplay
+                seconds={timer.remainingSeconds}
+                totalSeconds={timer.totalSeconds}
+                mode={timer.mode}
+              />
             <TimerSettings
               focusMinutes={focusMinutes}
               breakMinutes={breakMinutes}
