@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { usePomodoroTimer } from '@/hooks/usePomodoroTimer'
+import type { TimerMode } from '@/hooks/usePomodoroTimer'
 import { useColoredNoise } from '@/hooks/useColoredNoise'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import {
@@ -50,16 +51,44 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false)
   const noise = useColoredNoise()
 
-  const timer = usePomodoroTimer({ focusMinutes, breakMinutes, endSoundEnabled })
+  const stopNoise = useCallback(() => {
+    noise.stop()
+    setIsPlaying(false)
+  }, [noise])
 
-  const handlePlay = () => {
+  const timer = usePomodoroTimer({
+    focusMinutes,
+    breakMinutes,
+    endSoundEnabled,
+    onEnd: stopNoise,
+  })
+
+  // タイマー操作（ノイズと連動）
+  const handleTimerStart = () => {
+    timer.start()
     noise.play(noiseType, volume)
     setIsPlaying(true)
   }
 
-  const handleNoiseStop = () => {
-    noise.stop()
-    setIsPlaying(false)
+  const handleTimerStop = () => {
+    timer.stop()
+    stopNoise()
+  }
+
+  const handleTimerReset = () => {
+    timer.reset()
+    stopNoise()
+  }
+
+  const handleSwitchMode = (mode: TimerMode) => {
+    timer.switchMode(mode)
+    stopNoise()
+  }
+
+  // ノイズ単独操作
+  const handlePlay = () => {
+    noise.play(noiseType, volume)
+    setIsPlaying(true)
   }
 
   const handleNoiseTypeChange = (type: NoiseType) => {
@@ -82,7 +111,7 @@ export default function Home() {
 
         {/* タイマーセクション */}
         <div className="flex flex-col gap-4">
-          <ModeToggle mode={timer.mode} onSwitch={timer.switchMode} />
+          <ModeToggle mode={timer.mode} onSwitch={handleSwitchMode} />
 
           <div className="flex flex-col gap-1">
             <TimerDisplay seconds={timer.remainingSeconds} />
@@ -98,9 +127,9 @@ export default function Home() {
 
           <TimerControls
             isRunning={timer.isRunning}
-            onStart={timer.start}
-            onStop={timer.stop}
-            onReset={timer.reset}
+            onStart={handleTimerStart}
+            onStop={handleTimerStop}
+            onReset={handleTimerReset}
           />
         </div>
 
@@ -113,7 +142,7 @@ export default function Home() {
             isPlaying={isPlaying}
             noiseType={noiseType}
             onPlay={handlePlay}
-            onStop={handleNoiseStop}
+            onStop={stopNoise}
           />
           <VolumeSlider volume={volume} onChange={handleVolumeChange} />
         </div>
