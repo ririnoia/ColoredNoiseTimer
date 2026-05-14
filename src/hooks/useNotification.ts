@@ -14,7 +14,11 @@ export function useNotification() {
 
   const notify = useCallback((title: string, options?: NotificationOptions) => {
     if (!isSupported || Notification.permission !== 'granted') return
-    new Notification(title, options)
+    try {
+      new Notification(title, options)
+    } catch {
+      // モバイル等の環境ではAPIが存在してもコンストラクタが利用できない場合がある
+    }
   }, [isSupported])
 
   return { requestPermission, notify }
