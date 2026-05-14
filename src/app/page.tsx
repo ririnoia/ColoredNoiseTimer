@@ -19,6 +19,7 @@ import type { NoiseType } from '@/lib/constants'
 import { ModeToggle } from '@/components/timer/ModeToggle'
 import { TimerDisplay } from '@/components/timer/TimerDisplay'
 import { TimerControls } from '@/components/timer/TimerControls'
+import { SessionCounter } from '@/components/timer/SessionCounter'
 import { NoiseSelector } from '@/components/noise/NoiseSelector'
 import { AudioControls } from '@/components/noise/AudioControls'
 import { VolumeSlider } from '@/components/noise/VolumeSlider'
@@ -44,6 +45,8 @@ export default function Home() {
   const [rawBreakMinutes, setBreakMinutes] = useLocalStorage<number>('breakMinutes', DEFAULT_BREAK_MINUTES)
   const [rawEndSoundEnabled, setEndSoundEnabled] = useLocalStorage<boolean>('endSoundEnabled', DEFAULT_END_SOUND_ENABLED)
   const [rawAutoStart, setAutoStart] = useLocalStorage<boolean>('autoStart', DEFAULT_AUTO_START)
+  const [sessionCount, setSessionCount] = useLocalStorage<number>('sessionCount', 0)
+  const [sessionDate, setSessionDate] = useLocalStorage<string>('sessionDate', '')
 
   const noiseType = safeNoiseType(rawNoiseType)
   const volume = safeVolume(rawVolume)
@@ -52,20 +55,25 @@ export default function Home() {
   const endSoundEnabled = typeof rawEndSoundEnabled === 'boolean' ? rawEndSoundEnabled : DEFAULT_END_SOUND_ENABLED
   const autoStart = typeof rawAutoStart === 'boolean' ? rawAutoStart : DEFAULT_AUTO_START
 
+  // 今日の日付文字列（日付が変わったら自動リセット用）
+  const today = new Date().toDateString()
+  const displayCount = sessionDate === today ? (Number.isFinite(sessionCount) && sessionCount >= 0 ? sessionCount : 0) : 0
+
   const [isPlaying, setIsPlaying] = useState(false)
 
   // useColoredNoise の関数を直接分割代入することで安定した参照を得る
-  // noise オブジェクトは毎レンダーで新規生成されるが、各関数は useCallback で安定している
   const { play: noisePlay, stop: noiseStop, setVolume: noiseSetVolume } = useColoredNoise()
   const { requestPermission, notify } = useNotification()
 
   const timerModeRef = useRef<TimerMode>('focus')
   const switchModeRef = useRef<(mode: TimerMode) => void>(() => {})
   const autoStartRef = useRef(autoStart)
-  // タイマー終了によるモード切替を自動開始effectに伝えるフラグ
   const modeChangedByEndRef = useRef(false)
+  // handleTimerEnd 内でセッション日付を参照するためのref
+  const sessionDateRef = useRef(sessionDate)
 
-  // noiseStop は安定しているので stopNoise も安定した参照になる
+  useEffect(() => { sessionDateRef.current = sessionDate }, [sessionDate])
+
   const stopNoise = useCallback(() => {
     noiseStop()
     setIsPlaying(false)
@@ -76,6 +84,14 @@ export default function Home() {
     const endedMode = timerModeRef.current
     if (endedMode === 'focus') {
       notify('集中タイマー終了', { body: '休憩しましょう', icon: '/favicon.ico' })
+      // 集中セッション完了時にカウントアップ（日付が変わっていたらリセット）
+      const currentToday = new Date().toDateString()
+      if (sessionDateRef.current !== currentToday) {
+        setSessionDate(currentToday)
+        setSessionCount(1)
+      } else {
+        setSessionCount((c) => (Number.isFinite(c) && c >= 0 ? c + 1 : 1))
+      }
     } else {
       notify('休憩タイマー終了', { body: '集中を再開しましょう', icon: '/favicon.ico' })
     }
@@ -83,7 +99,7 @@ export default function Home() {
     if (autoStartRef.current) {
       modeChangedByEndRef.current = true
     }
-  }, [stopNoise, notify])
+  }, [stopNoise, notify, setSessionCount, setSessionDate])
 
   const timer = usePomodoroTimer({
     focusMinutes,
@@ -96,9 +112,7 @@ export default function Home() {
   useEffect(() => { switchModeRef.current = timer.switchMode }, [timer.switchMode])
   useEffect(() => { autoStartRef.current = autoStart }, [autoStart])
 
-  // 自動開始: timer.mode 変化後（コミット済み）にタイマーとノイズを開始する。
-  // このタイミングで timer.start() を呼ぶことで、切替後のモードの settingsSeconds が使われる。
-  // noiseType/volume/noisePlay の変化では発火させないため deps は timer.mode のみ。
+  // 自動開始: timer.mode 変化後（コミット済み）にタイマーとノイズを開始する
   useEffect(() => {
     if (!modeChangedByEndRef.current) return
     modeChangedByEndRef.current = false
@@ -172,6 +186,8 @@ export default function Home() {
               onAutoStartChange={setAutoStart}
             />
           </div>
+
+          <SessionCounter count={displayCount} />
 
           <TimerControls
             isRunning={timer.isRunning}
