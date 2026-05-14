@@ -5,6 +5,13 @@ test.describe('ホームページ', () => {
     await page.goto('/')
   })
 
+  test('通知許可済みのときタイマー開始でエラーが出ない', async ({ page, context }) => {
+    await context.grantPermissions(['notifications'])
+    await page.goto('/')
+    await page.getByRole('button', { name: '開始', exact: true }).click()
+    await expect(page.getByRole('button', { name: '停止', exact: true })).toBeVisible()
+  })
+
   const timerStart = (page: Parameters<Parameters<typeof test>[1]>[0]['page']) =>
     page.getByRole('button', { name: '開始', exact: true })
   const timerStop = (page: Parameters<Parameters<typeof test>[1]>[0]['page']) =>
