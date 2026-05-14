@@ -13,6 +13,7 @@ import {
   DEFAULT_FOCUS_MINUTES,
   DEFAULT_BREAK_MINUTES,
   DEFAULT_END_SOUND_ENABLED,
+  DEFAULT_AUTO_START,
 } from '@/lib/constants'
 import type { NoiseType } from '@/lib/constants'
 import { ModeToggle } from '@/components/timer/ModeToggle'
@@ -42,21 +43,26 @@ export default function Home() {
   const [rawFocusMinutes, setFocusMinutes] = useLocalStorage<number>('focusMinutes', DEFAULT_FOCUS_MINUTES)
   const [rawBreakMinutes, setBreakMinutes] = useLocalStorage<number>('breakMinutes', DEFAULT_BREAK_MINUTES)
   const [rawEndSoundEnabled, setEndSoundEnabled] = useLocalStorage<boolean>('endSoundEnabled', DEFAULT_END_SOUND_ENABLED)
+  const [rawAutoStart, setAutoStart] = useLocalStorage<boolean>('autoStart', DEFAULT_AUTO_START)
 
   const noiseType = safeNoiseType(rawNoiseType)
   const volume = safeVolume(rawVolume)
   const focusMinutes = safeMinutes(rawFocusMinutes, DEFAULT_FOCUS_MINUTES)
   const breakMinutes = safeMinutes(rawBreakMinutes, DEFAULT_BREAK_MINUTES)
   const endSoundEnabled = typeof rawEndSoundEnabled === 'boolean' ? rawEndSoundEnabled : DEFAULT_END_SOUND_ENABLED
+  const autoStart = typeof rawAutoStart === 'boolean' ? rawAutoStart : DEFAULT_AUTO_START
 
   const [isPlaying, setIsPlaying] = useState(false)
   const noise = useColoredNoise()
   const { requestPermission, notify } = useNotification()
 
-  // タイマー終了コールバック内で最新の mode と switchMode を参照するためにrefで保持
+  // onEnd コールバック内で最新の値を参照するためのref群
   // （handleTimerEnd は usePomodoroTimer より先に定義するため直接参照できない）
   const timerModeRef = useRef<TimerMode>('focus')
   const switchModeRef = useRef<(mode: TimerMode) => void>(() => {})
+  const startTimerRef = useRef<() => void>(() => {})
+  const playNoiseRef = useRef<() => void>(() => {})
+  const autoStartRef = useRef(autoStart)
 
   const stopNoise = useCallback(() => {
     noise.stop()
@@ -71,8 +77,11 @@ export default function Home() {
     } else {
       notify('休憩タイマー終了', { body: '集中を再開しましょう', icon: '/favicon.ico' })
     }
-    // 終了したモードの反対に自動切り替え
     switchModeRef.current(endedMode === 'focus' ? 'break' : 'focus')
+    if (autoStartRef.current) {
+      startTimerRef.current()
+      playNoiseRef.current()
+    }
   }, [stopNoise, notify])
 
   const timer = usePomodoroTimer({
@@ -84,6 +93,14 @@ export default function Home() {
 
   useEffect(() => { timerModeRef.current = timer.mode }, [timer.mode])
   useEffect(() => { switchModeRef.current = timer.switchMode }, [timer.switchMode])
+  useEffect(() => { startTimerRef.current = timer.start }, [timer.start])
+  useEffect(() => {
+    playNoiseRef.current = () => {
+      noise.play(noiseType, volume)
+      setIsPlaying(true)
+    }
+  }, [noise, noiseType, volume])
+  useEffect(() => { autoStartRef.current = autoStart }, [autoStart])
 
   // タイマー操作（ノイズ連動 + 通知許可リクエスト）
   const handleTimerStart = () => {
@@ -142,9 +159,11 @@ export default function Home() {
               focusMinutes={focusMinutes}
               breakMinutes={breakMinutes}
               endSoundEnabled={endSoundEnabled}
+              autoStart={autoStart}
               onFocusChange={setFocusMinutes}
               onBreakChange={setBreakMinutes}
               onEndSoundChange={setEndSoundEnabled}
+              onAutoStartChange={setAutoStart}
             />
           </div>
 
