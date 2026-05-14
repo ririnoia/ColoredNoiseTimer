@@ -55,4 +55,11 @@ describe('useNotification', () => {
     result.current.notify('テスト通知')
     expect(MockNotification).not.toHaveBeenCalled()
   })
+
+  it('notify: コンストラクタがthrowしてもエラーを伝播させない', () => {
+    Object.assign(MockNotification, { permission: 'granted' })
+    MockNotification.mockImplementationOnce(() => { throw new TypeError('Not supported') })
+    const { result } = renderHook(() => useNotification())
+    expect(() => result.current.notify('テスト通知')).not.toThrow()
+  })
 })
