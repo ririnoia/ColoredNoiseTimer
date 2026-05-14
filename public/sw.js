@@ -28,20 +28,14 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
 
-  // ナビゲーション: ネットワーク優先 → オフライン時はキャッシュをフォールバック
+  // ナビゲーション: ネットワーク優先 → オフライン時は offline.html をフォールバック
+  // オフライン時は常に offline.html を返すため、ナビゲーション応答はキャッシュしない
+  // （書き込んでも読まれず Cache Storage を無駄に消費するため）
   if (request.mode === 'navigate') {
     event.respondWith(
       (async () => {
         try {
-          const response = await fetch(request)
-          // Fix2: 失敗レスポンス（404/500）はキャッシュしない
-          if (response.ok) {
-            // Fix3: event.waitUntil でキャッシュ書き込み完了まで SW を生かし続ける
-            event.waitUntil(
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()))
-            )
-          }
-          return response
+          return await fetch(request)
         } catch {
           // JS/CSS に依存しない offline.html を提供し、壊れたアプリシェルを避ける
           const cached = await caches.match('/offline.html')

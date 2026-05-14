@@ -12,7 +12,8 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/icon.svg',
-    apple: '/icon.svg',
+    // Safari は SVG の apple-touch-icon を使わないため PNG エンドポイントを指定する
+    apple: '/icon-192',
   },
 }
 
