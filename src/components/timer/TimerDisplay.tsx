@@ -16,7 +16,8 @@ const RING_COLOR: Record<TimerMode, string> = {
 }
 
 export function TimerDisplay({ seconds, totalSeconds, mode }: TimerDisplayProps) {
-  const progress = totalSeconds > 0 ? seconds / totalSeconds : 0
+  // タイマー実行中に totalSeconds が短縮されると seconds > totalSeconds になる場合があるため [0,1] にクランプ
+  const progress = totalSeconds > 0 ? Math.min(1, seconds / totalSeconds) : 0
   const dashOffset = CIRCUMFERENCE * (1 - progress)
 
   const m = Math.floor(seconds / 60)

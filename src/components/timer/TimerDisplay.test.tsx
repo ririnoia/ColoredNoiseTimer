@@ -35,4 +35,14 @@ describe('TimerDisplay', () => {
     render(<TimerDisplay seconds={300} totalSeconds={300} mode="break" />)
     expect(screen.getByText('05:00')).toBeInTheDocument()
   })
+
+  it('seconds > totalSeconds（実行中に時間短縮）でもエラーにならない', () => {
+    // progress が 1 を超えないことで dashOffset が負にならない
+    const { container } = render(
+      <TimerDisplay seconds={1200} totalSeconds={900} mode="focus" />
+    )
+    const progressCircle = container.querySelectorAll('circle')[1]
+    const dashOffset = parseFloat(progressCircle?.getAttribute('stroke-dashoffset') ?? '0')
+    expect(dashOffset).toBeGreaterThanOrEqual(0)
+  })
 })
