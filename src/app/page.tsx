@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { usePomodoroTimer } from '@/hooks/usePomodoroTimer'
 import type { TimerMode } from '@/hooks/usePomodoroTimer'
 import { useColoredNoise } from '@/hooks/useColoredNoise'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { useNotification } from '@/hooks/useNotification'
 import {
   NOISE_TYPES,
   DEFAULT_NOISE,
@@ -50,21 +51,39 @@ export default function Home() {
 
   const [isPlaying, setIsPlaying] = useState(false)
   const noise = useColoredNoise()
+  const { requestPermission, notify } = useNotification()
+
+  // タイマー終了時に終了したモードを通知文に使うためrefで追跡
+  const timerModeRef = useRef<TimerMode>('focus')
 
   const stopNoise = useCallback(() => {
     noise.stop()
     setIsPlaying(false)
   }, [noise])
 
+  const handleTimerEnd = useCallback(() => {
+    stopNoise()
+    if (timerModeRef.current === 'focus') {
+      notify('集中タイマー終了', { body: '休憩しましょう', icon: '/favicon.ico' })
+    } else {
+      notify('休憩タイマー終了', { body: '集中を再開しましょう', icon: '/favicon.ico' })
+    }
+  }, [stopNoise, notify])
+
   const timer = usePomodoroTimer({
     focusMinutes,
     breakMinutes,
     endSoundEnabled,
-    onEnd: stopNoise,
+    onEnd: handleTimerEnd,
   })
 
-  // タイマー操作（ノイズと連動）
+  useEffect(() => {
+    timerModeRef.current = timer.mode
+  }, [timer.mode])
+
+  // タイマー操作（ノイズ連動 + 通知許可リクエスト）
   const handleTimerStart = () => {
+    requestPermission()
     timer.start()
     noise.play(noiseType, volume)
     setIsPlaying(true)
