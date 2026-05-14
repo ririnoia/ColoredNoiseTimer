@@ -53,8 +53,10 @@ export default function Home() {
   const noise = useColoredNoise()
   const { requestPermission, notify } = useNotification()
 
-  // タイマー終了時に終了したモードを通知文に使うためrefで追跡
+  // タイマー終了コールバック内で最新の mode と switchMode を参照するためにrefで保持
+  // （handleTimerEnd は usePomodoroTimer より先に定義するため直接参照できない）
   const timerModeRef = useRef<TimerMode>('focus')
+  const switchModeRef = useRef<(mode: TimerMode) => void>(() => {})
 
   const stopNoise = useCallback(() => {
     noise.stop()
@@ -63,11 +65,14 @@ export default function Home() {
 
   const handleTimerEnd = useCallback(() => {
     stopNoise()
-    if (timerModeRef.current === 'focus') {
+    const endedMode = timerModeRef.current
+    if (endedMode === 'focus') {
       notify('集中タイマー終了', { body: '休憩しましょう', icon: '/favicon.ico' })
     } else {
       notify('休憩タイマー終了', { body: '集中を再開しましょう', icon: '/favicon.ico' })
     }
+    // 終了したモードの反対に自動切り替え
+    switchModeRef.current(endedMode === 'focus' ? 'break' : 'focus')
   }, [stopNoise, notify])
 
   const timer = usePomodoroTimer({
@@ -77,9 +82,8 @@ export default function Home() {
     onEnd: handleTimerEnd,
   })
 
-  useEffect(() => {
-    timerModeRef.current = timer.mode
-  }, [timer.mode])
+  useEffect(() => { timerModeRef.current = timer.mode }, [timer.mode])
+  useEffect(() => { switchModeRef.current = timer.switchMode }, [timer.switchMode])
 
   // タイマー操作（ノイズ連動 + 通知許可リクエスト）
   const handleTimerStart = () => {
