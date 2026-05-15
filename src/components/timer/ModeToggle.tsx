@@ -22,7 +22,7 @@ export function ModeToggle({ mode, onSwitch }: ModeToggleProps) {
           className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
             mode === value
               ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-              : 'text-gray-600 dark:text-gray-100 hover:text-gray-900 dark:hover:text-gray-100'
+              : 'text-gray-700 dark:text-gray-100 hover:text-gray-900 dark:hover:text-gray-100'
           }`}
         >
           {label}

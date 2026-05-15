@@ -51,7 +51,7 @@ export function TimerSettings({
   const clamp = (v: number) => Math.max(1, Math.min(99, v))
 
   return (
-    <div className="flex flex-col gap-3 text-sm text-gray-600 dark:text-gray-100">
+    <div className="flex flex-col gap-3 text-sm text-gray-700 dark:text-gray-100">
 
       {/* 時間設定 */}
       <div className="flex items-center justify-center gap-5">

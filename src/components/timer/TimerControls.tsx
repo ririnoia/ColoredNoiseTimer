@@ -18,7 +18,7 @@ export function TimerControls({ isRunning, onStart, onStop, onReset }: TimerCont
       <button
         type="button"
         onClick={onReset}
-        className="px-4 py-3 text-sm text-gray-600 dark:text-gray-100 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+        className="px-4 py-3 text-sm text-gray-700 dark:text-gray-100 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
       >
         リセット
       </button>
