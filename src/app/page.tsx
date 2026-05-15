@@ -208,7 +208,7 @@ export default function Home() {
             onReset={handleTimerReset}
           />
 
-          <p className="text-center text-xs text-gray-600 dark:text-gray-100 select-none">
+          <p className="text-center text-xs text-gray-600 dark:text-gray-100 select-none mt-2">
             ショートカット<br />
             スペース : 開始/停止 &nbsp;&nbsp; R : リセット &nbsp;&nbsp; M : モード切替
           </p>
