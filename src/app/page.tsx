@@ -6,6 +6,7 @@ import type { TimerMode } from '@/hooks/usePomodoroTimer'
 import { useColoredNoise } from '@/hooks/useColoredNoise'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useNotification } from '@/hooks/useNotification'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import {
   NOISE_TYPES,
   DEFAULT_NOISE,
@@ -161,6 +162,13 @@ export default function Home() {
     noiseSetVolume(v)
   }
 
+  // キーボードショートカット
+  useKeyboardShortcuts({
+    onStartStop: () => { if (timer.isRunning) handleTimerStop(); else handleTimerStart() },
+    onReset: handleTimerReset,
+    onSwitchMode: () => handleSwitchMode(timer.mode === 'focus' ? 'break' : 'focus'),
+  })
+
   return (
     <main className="min-h-screen flex flex-col items-center py-8 px-4">
       <div className="w-full max-w-sm flex flex-col gap-6">
@@ -199,6 +207,10 @@ export default function Home() {
             onStop={handleTimerStop}
             onReset={handleTimerReset}
           />
+
+          <p className="text-center text-xs text-gray-300 dark:text-gray-700 select-none">
+            スペース 開始/停止 &nbsp;·&nbsp; R リセット &nbsp;·&nbsp; M モード切替
+          </p>
         </div>
 
         <hr className="border-gray-200 dark:border-gray-800" />
