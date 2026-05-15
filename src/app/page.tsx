@@ -190,21 +190,19 @@ export default function Home() {
 
             <SessionCounter count={displayCount} />
 
-            <div className="mt-2">
+            <div className="mt-3">
               <TimerSettings
                 focusMinutes={focusMinutes}
-                breakMinutes={breakMinutes}
-                endSoundEnabled={endSoundEnabled}
-                autoStart={autoStart}
-                onFocusChange={setFocusMinutes}
-                onBreakChange={setBreakMinutes}
-                onEndSoundChange={setEndSoundEnabled}
+              breakMinutes={breakMinutes}
+              endSoundEnabled={endSoundEnabled}
+              autoStart={autoStart}
+              onFocusChange={setFocusMinutes}
+              onBreakChange={setBreakMinutes}
+              onEndSoundChange={setEndSoundEnabled}
                 onAutoStartChange={setAutoStart}
               />
             </div>
           </div>
-
-
 
           <TimerControls
             isRunning={timer.isRunning}
