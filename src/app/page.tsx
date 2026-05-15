@@ -187,19 +187,24 @@ export default function Home() {
                 totalSeconds={timer.totalSeconds}
                 mode={timer.mode}
               />
-            <TimerSettings
-              focusMinutes={focusMinutes}
-              breakMinutes={breakMinutes}
-              endSoundEnabled={endSoundEnabled}
-              autoStart={autoStart}
-              onFocusChange={setFocusMinutes}
-              onBreakChange={setBreakMinutes}
-              onEndSoundChange={setEndSoundEnabled}
-              onAutoStartChange={setAutoStart}
-            />
+
+            <SessionCounter count={displayCount} />
+
+            <div className="mt-2">
+              <TimerSettings
+                focusMinutes={focusMinutes}
+                breakMinutes={breakMinutes}
+                endSoundEnabled={endSoundEnabled}
+                autoStart={autoStart}
+                onFocusChange={setFocusMinutes}
+                onBreakChange={setBreakMinutes}
+                onEndSoundChange={setEndSoundEnabled}
+                onAutoStartChange={setAutoStart}
+              />
+            </div>
           </div>
 
-          <SessionCounter count={displayCount} />
+
 
           <TimerControls
             isRunning={timer.isRunning}
