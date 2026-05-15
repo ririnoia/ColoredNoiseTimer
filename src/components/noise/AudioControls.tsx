@@ -22,7 +22,7 @@ export function AudioControls({ isPlaying, noiseType, onPlay, onStop }: AudioCon
       >
         {isPlaying ? '■' : '▶'}
       </button>
-      <span className="text-xs text-gray-400 dark:text-gray-100">
+      <span className="text-xs text-gray-600 dark:text-gray-100">
         {isPlaying ? `${noiseType} を再生中` : noiseType}
       </span>
     </div>
