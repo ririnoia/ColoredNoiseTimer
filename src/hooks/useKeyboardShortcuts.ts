@@ -18,9 +18,17 @@ export function useKeyboardShortcuts({ onStartStop, onReset, onSwitchMode }: Sho
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // input/textarea 入力中はショートカットを無効化
-      const tag = (e.target as HTMLElement).tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      // Fix2: キーリピート（長押し）は無視してトグル誤動作を防ぐ
+      if (e.repeat) return
+
+      // Fix1: フォーカスがインタラクティブ要素にある場合は無効化
+      // button にフォーカスがある状態で Space を押すとネイティブのボタン活性化を
+      // 抑制してしまうため、button/a/select/contenteditable も除外する
+      // instanceof Element でガードし、window/document が target の場合も安全に扱う
+      const target = e.target
+      if (target instanceof Element &&
+          target.matches('input, textarea, select, button, a, [contenteditable]')) return
+
       // 修飾キー付きは無効化（ブラウザショートカットを妨げない）
       if (e.metaKey || e.ctrlKey || e.altKey) return
 

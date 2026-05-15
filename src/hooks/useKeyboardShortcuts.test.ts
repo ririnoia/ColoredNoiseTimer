@@ -68,6 +68,22 @@ describe('useKeyboardShortcuts', () => {
     document.body.removeChild(input)
   })
 
+  it('button にフォーカスがあるときは発火しない（アクセシビリティ保護）', () => {
+    const { onStartStop } = setup()
+    const btn = document.createElement('button')
+    document.body.appendChild(btn)
+    btn.focus()
+    fireEvent.keyDown(btn, { key: ' ' })
+    expect(onStartStop).not.toHaveBeenCalled()
+    document.body.removeChild(btn)
+  })
+
+  it('キーリピート（長押し）では発火しない', () => {
+    const { onStartStop } = setup()
+    fireEvent.keyDown(window, { key: ' ', repeat: true })
+    expect(onStartStop).not.toHaveBeenCalled()
+  })
+
   it('アンマウント時にイベントリスナーが削除される', () => {
     const { onStartStop, unmount } = (() => {
       const onStartStop = vi.fn()
