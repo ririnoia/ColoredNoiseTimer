@@ -173,7 +173,7 @@ export default function Home() {
     <main className="min-h-screen flex flex-col items-center py-8 px-4">
       <div className="w-full max-w-sm flex flex-col gap-6">
 
-        <h1 className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 tracking-widest uppercase">
+        <h1 className="text-center text-xs font-medium text-gray-700 dark:text-gray-100 tracking-widest uppercase">
           ColoredNoiseTimer
         </h1>
 
@@ -187,19 +187,22 @@ export default function Home() {
                 totalSeconds={timer.totalSeconds}
                 mode={timer.mode}
               />
-            <TimerSettings
-              focusMinutes={focusMinutes}
+
+            <SessionCounter count={displayCount} />
+
+            <div className="mt-3">
+              <TimerSettings
+                focusMinutes={focusMinutes}
               breakMinutes={breakMinutes}
               endSoundEnabled={endSoundEnabled}
               autoStart={autoStart}
               onFocusChange={setFocusMinutes}
               onBreakChange={setBreakMinutes}
               onEndSoundChange={setEndSoundEnabled}
-              onAutoStartChange={setAutoStart}
-            />
+                onAutoStartChange={setAutoStart}
+              />
+            </div>
           </div>
-
-          <SessionCounter count={displayCount} />
 
           <TimerControls
             isRunning={timer.isRunning}
@@ -208,8 +211,9 @@ export default function Home() {
             onReset={handleTimerReset}
           />
 
-          <p className="text-center text-xs text-gray-300 dark:text-gray-700 select-none">
-            スペース 開始/停止 &nbsp;·&nbsp; R リセット &nbsp;·&nbsp; M モード切替
+          <p className="text-center text-xs text-gray-600 dark:text-gray-100 select-none mt-2">
+            ショートカット<br />
+            スペース : 開始/停止 &nbsp;&nbsp; R : リセット &nbsp;&nbsp; M : モード切替
           </p>
         </div>
 

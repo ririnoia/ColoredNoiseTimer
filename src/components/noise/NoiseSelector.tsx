@@ -10,6 +10,16 @@ const NOISE_COLORS: Record<NoiseType, string> = {
   'Violet Noise': 'bg-violet-500',
 }
 
+// White Noise は白背景に溶け込むため、ライトモードでは濃いボーダーで輪郭を明確にする
+const BORDER_COLORS: Record<NoiseType, string> = {
+  'White Noise':  'border-gray-400 dark:border-0',
+  'Grey Noise':   'border-gray-200 dark:border-0',
+  'Pink Noise':   'border-gray-200 dark:border-0',
+  'Brown Noise':  'border-gray-200 dark:border-0',
+  'Blue Noise':   'border-gray-200 dark:border-0',
+  'Violet Noise': 'border-gray-200 dark:border-0',
+}
+
 interface NoiseSelectorProps {
   selected: NoiseType
   onChange: (type: NoiseType) => void
@@ -25,7 +35,7 @@ export function NoiseSelector({ selected, onChange }: NoiseSelectorProps) {
           onClick={() => onChange(type)}
           aria-pressed={selected === type}
           aria-label={type}
-          className={`w-8 h-8 rounded-full transition-all border border-gray-200 dark:border-0 ${NOISE_COLORS[type]} ${
+          className={`w-8 h-8 rounded-full transition-all border ${BORDER_COLORS[type]} ${NOISE_COLORS[type]} ${
             selected === type
               ? 'ring-2 ring-gray-900 dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-gray-950 scale-110'
               : 'opacity-60 hover:opacity-90'
