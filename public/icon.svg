@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 背景 -->
+  <rect width="512" height="512" rx="96" fill="#030712"/>
+  <!-- 外枠リング -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#4f46e5" stroke-width="20"/>
+  <!-- 12時の目盛り -->
+  <line x1="256" y1="82" x2="256" y2="114" stroke="#4f46e5" stroke-width="14" stroke-linecap="round"/>
+  <!-- 時針 -->
+  <line x1="256" y1="256" x2="256" y2="130" stroke="#ffffff" stroke-width="18" stroke-linecap="round"/>
+  <!-- 分針 -->
+  <line x1="256" y1="256" x2="348" y2="302" stroke="#4f46e5" stroke-width="12" stroke-linecap="round"/>
+  <!-- 中心点 -->
+  <circle cx="256" cy="256" r="14" fill="#ffffff"/>
+</svg>
